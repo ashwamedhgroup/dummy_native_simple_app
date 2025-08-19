@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Animated, Text, TouchableHighlight, View } from "react-native";
+import { Alert, Animated, Text, TouchableHighlight, View, ScrollView, RefreshControl } from "react-native";
 import apiClient from "../src/api/client"
+import dashboardApi from "../src/api/dashboard"
 import authContext from "../src/auth/context"
 import authStorage from "../src/auth/storage";
 import {navigation} from "../navigation/NavigationService"
 import { styles } from "../src/styles/dashboard.style";
 import Location from "../src/utility/location";
 import storage from "../src/utility/storage";
+import DashboardStats from "../src/components/dashboard/DashboardStats";
+import DashboardLoader from "../src/components/dashboard/DashboardLoader";
 
 
 const INPUNCH_URL = process.env.EXPO_PUBLIC_INPUNCH_URL;
@@ -18,33 +21,79 @@ const OUTPUNCH_URL = process.env.EXPO_PUBLIC_OUTPUNCH_URL;
 function Dashboard() {
   const [hasInpunch, setHasInpunch] = useState(false);
   const [inpunchId, setInpunchId] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { setUser } = useContext(authContext); 
 
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      const result = await dashboardApi.getDashboardData();
+      if (result.success) {
+        setDashboardData(result.data);
+        
+        // Update punch status based on dashboard data
+        const { punch_status } = result.data;
+        if (punch_status) {
+          const { punched_in, punched_out, punch_id } = punch_status;
+          
+          if (punched_in && !punched_out && punch_id) {
+            const punchId = String(punch_id);
+            await storage.set("punchId", punchId);
+            setInpunchId(punchId);
+            setHasInpunch(true);
+          } else {
+            setHasInpunch(false);
+            if (punched_in && punched_out) {
+              // Completed punch cycle for the day
+              await storage.remove("punchId");
+              setInpunchId(null);
+            }
+          }
+        }
+      } else {
+        console.error("Failed to fetch dashboard data:", result.error);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Check punch status and maintain login state
   useEffect(() => {
     const checkPunchStatus = async () => {
       try {
+        // First try to get data from new dashboard API
+        await fetchDashboardData();
+        
+        // Fallback to old API if dashboard API fails
         const response = await apiClient.get("/track/punch-in/");
-        const { punched_in, punched_out, punch_id } = response.data;
+        if (response.ok && response.data) {
+          const { punched_in, punched_out, punch_id } = response.data;
+          console.log("Punch Id *********************************:", punch_id);
 
-        if (punched_in == true && punched_out == false) {
-          const punchId = String(punch_id);
-          await storage.set("punchId", punchId);
-          setInpunchId(punchId);
-          setHasInpunch(true);
+          if (punched_in == true && punched_out == false) {
+            const punchId = String(punch_id);
+            await storage.set("punchId", punchId);
+            setInpunchId(punchId);
+            setHasInpunch(true);
 
-          // Ensure user stays logged in
-          const token = await authStorage.getUser();
-          if (token) {
-            setUser(token);
+            // Ensure user stays logged in
+            const token = await authStorage.getUser();
+            if (token) {
+              setUser(token);
+            }
+          } else if (punched_in == true && punched_out == true) {
+            setHasInpunch(false);
+            // Don't clear storage on completed punch - user should stay logged in
+          } else {
+            setHasInpunch(false);
+            setInpunchId(null);
           }
-        } else if (punched_in == true && punched_out == true) {
-          setHasInpunch(false);
-          // Don't clear storage on completed punch - user should stay logged in
-        } else {
-          setHasInpunch(false);
-          setInpunchId(null);
         }
       } catch (error) {
         // console.error("Error checking punch status:", error);
@@ -71,6 +120,10 @@ function Dashboard() {
       await AsyncStorage.setItem("id", id);
       setInpunchId(id);
       setHasInpunch(true);
+      
+      // Refresh dashboard data after punch in
+      await fetchDashboardData();
+      
       Alert.alert(
         "Success",
         "Inpunch recorded successfully",
@@ -94,9 +147,11 @@ function Dashboard() {
       );
 
       const payload = {
-        outpunch_latitude: Number(latitude.toFixed(8)),
-        outpunch_longitude: Number(longitude.toFixed(8)),
+        latitude: Number(latitude.toFixed(6)),
+        longitude: Number(longitude.toFixed(6)),
       };
+
+      console.log("Punch Id:", inpunchId);
 
       await apiClient.patch(`${OUTPUNCH_URL}${inpunchId}/`, payload);
 
@@ -106,6 +161,10 @@ function Dashboard() {
 
       setInpunchId(null);
       setHasInpunch(false);
+      
+      // Refresh dashboard data after punch out
+      await fetchDashboardData();
+      
        Alert.alert(
         "Success",
         "Outpunch recorded successfully",
@@ -115,6 +174,13 @@ function Dashboard() {
     } catch (error) {
       Alert.alert("Error", "Failed to record outpunch. Please try again.");
     }
+  };
+
+  // Pull to refresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
   };
 
   const AnimatedSubContainer = ({ children, delay = 0 }) => {
@@ -152,8 +218,17 @@ function Dashboard() {
   };
 
   return (
-    <View style={styles.container}>
-      
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#4CAF50']}
+          tintColor="#4CAF50"
+        />
+      }
+    >
       {/* Status Badge */}
       <View
         style={[
@@ -179,6 +254,15 @@ function Dashboard() {
           {hasInpunch ? "Punched In" : "Not Punched"}
         </Text>
       </View>
+
+      {/* Dashboard Stats */}
+      {isLoading ? (
+        <DashboardLoader />
+      ) : dashboardData ? (
+        <AnimatedSubContainer delay={50}>
+          <DashboardStats dashboardData={dashboardData} />
+        </AnimatedSubContainer>
+      ) : null}
 
       {/* Main Content */}
       <View style={styles.mainContent}>
@@ -290,7 +374,7 @@ function Dashboard() {
           </AnimatedSubContainer>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

@@ -18,10 +18,10 @@ import { useNavigation } from "@react-navigation/native";
 
 // import useAuth from "../../Auth/useAuth";
 import useAuth from "../../auth/useAuth";
-import logout from "../../api/logout";
+
 
 const NavigationModel = ({ visible, onClose, userType,item, menuItems }) => {
-  const { logout } = useAuth();
+  const { logOut } = useAuth();
   const slideAnim = useRef(new Animated.Value(100)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
   const navigation =useNavigation();
@@ -60,7 +60,7 @@ const NavigationModel = ({ visible, onClose, userType,item, menuItems }) => {
     onClose();
 
     if (route === "Login") {
-      const result = await logout();
+      const result = await logOut();
       if (result.success) {
         showToast.success("Logged out successfully.");
       } else {

@@ -4,42 +4,81 @@ export const styles = {
   container: {
     flex: 1,
     backgroundColor: DESIGN.colors.background,
-    paddingTop: DESIGN.spacing.lg,
+  },
+
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    paddingHorizontal: DESIGN.spacing.md,
+    paddingVertical: DESIGN.spacing.sm,
+    borderRadius: DESIGN.borderRadius.lg,
+    marginTop: DESIGN.spacing.md,
+    marginBottom: DESIGN.spacing.lg,
+    ...DESIGN.shadows.subtle,
+  },
+
+  statusBadgeActive: {
+    backgroundColor: DESIGN.colors.success + '15',
+    borderWidth: 1,
+    borderColor: DESIGN.colors.success + '30',
+  },
+
+  statusBadgeInactive: {
+    backgroundColor: DESIGN.colors.warning + '15',
+    borderWidth: 1,
+    borderColor: DESIGN.colors.warning + '30',
+  },
+
+  statusText: {
+    marginLeft: DESIGN.spacing.xs,
+    fontSize: DESIGN.typography.body.fontSize,
+    fontWeight: "600",
+  },
+
+  statusTextActive: {
+    color: DESIGN.colors.success,
+  },
+
+  statusTextInactive: {
+    color: DESIGN.colors.warning,
   },
 
   mainContent: {
-    flex: 1,
     paddingHorizontal: DESIGN.spacing.md,
-    paddingTop: DESIGN.spacing.md,
+    paddingBottom: DESIGN.spacing.xl,
   },
 
   punchSection: {
     alignItems: "center",
     marginBottom: DESIGN.spacing.xxl,
+    paddingVertical: DESIGN.spacing.lg,
   },
 
   punchButton: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     justifyContent: "center",
     alignItems: "center",
     ...DESIGN.shadows.medium,
+    elevation: 8,
   },
 
   punchButtonActive: {
-    backgroundColor: DESIGN.colors.accent,
+    backgroundColor: DESIGN.colors.success,
   },
 
   punchButtonInactive: {
-    backgroundColor: "#F44336", // ❗ You might want to add this to theme if reused
+    backgroundColor: DESIGN.colors.error,
   },
 
   punchButtonText: {
     color: DESIGN.colors.surface,
-    fontSize: DESIGN.typography.bodyLarge.fontSize,
-    fontWeight: DESIGN.typography.subtitle.fontWeight,
+    fontSize: DESIGN.typography.subtitle.fontSize,
+    fontWeight: "700",
     marginTop: DESIGN.spacing.sm,
+    textAlign: "center",
   },
 
   punchIcon: {
@@ -55,72 +94,33 @@ export const styles = {
   actionCard: {
     flex: 1,
     backgroundColor: DESIGN.colors.surface,
+    paddingVertical: DESIGN.spacing.xl,
+    paddingHorizontal: DESIGN.spacing.md,
     borderRadius: DESIGN.borderRadius.lg,
-    padding: DESIGN.spacing.lg,
-    alignItems: "center",
-    ...DESIGN.shadows.subtle,
-    minHeight: 120,
+    ...DESIGN.shadows.medium,
+    borderWidth: 1,
+    borderColor: DESIGN.colors.border,
   },
 
   actionCardDisabled: {
-    opacity: 0.4,
     backgroundColor: DESIGN.colors.surfaceElevated,
+    borderColor: DESIGN.colors.borderLight,
+    opacity: 0.6,
   },
 
   actionIcon: {
-    marginBottom: DESIGN.spacing.sm,
+    marginBottom: DESIGN.spacing.md,
   },
 
   actionTitle: {
     fontSize: DESIGN.typography.body.fontSize,
-    fontWeight: DESIGN.typography.subtitle.fontWeight,
+    fontWeight: "600",
     color: DESIGN.colors.textPrimary,
     textAlign: "center",
-    lineHeight: DESIGN.typography.body.lineHeight,
+    lineHeight: 20,
   },
 
   actionTitleDisabled: {
     color: DESIGN.colors.textSecondary,
-  },
-
-  pulseAnimation: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: DESIGN.colors.accent,
-    opacity: 0.3,
-  },
-
-  statusBadge: {
-    alignSelf: "center",
-    paddingHorizontal: DESIGN.spacing.md,
-    paddingVertical: DESIGN.spacing.sm,
-    borderRadius: DESIGN.borderRadius.xl,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: DESIGN.spacing.lg,
-  },
-
-  statusBadgeActive: {
-    backgroundColor: "#E8F5E8", // could also be added to theme as a "successBackground"
-  },
-
-  statusBadgeInactive: {
-    backgroundColor: "#FFF3E0", // could also be added to theme as a "warningBackground"
-  },
-
-  statusText: {
-    fontSize: DESIGN.typography.body.fontSize - 2,
-    fontWeight: DESIGN.typography.subtitle.fontWeight,
-    marginLeft: DESIGN.spacing.xs,
-  },
-
-  statusTextActive: {
-    color: DESIGN.colors.primary,
-  },
-
-  statusTextInactive: {
-    color: DESIGN.colors.secondary,
   },
 };
